@@ -1,184 +1,196 @@
-# Backend API Documentation
+# Uber Backend
 
-## Table of Contents
-- [User Registration](#user-registration)
-- [User Login](#user-login)
-- [Get User Profile](#get-user-profile)
-- [User Logout](#user-logout)
+This repository contains the backend implementation for an Uber-like application. Below is a detailed overview of the project structure and functionality.
 
 ---
 
-## User Registration
+## Project Structure
 
-### Endpoint: `/users/register`
-
-#### Method: `POST`
-
-#### Description:
-This endpoint is used to register a new user in the system. It validates the input data, hashes the password, and creates a new user record in the database.
-
-#### Request Body:
-```json
-{
-  "fullname": {
-    "firstname": "string (min: 3 characters, required)",
-    "lastname": "string (min: 3 characters, optional)"
-  },
-  "email": "string (valid email format, required)",
-  "password": "string (min: 6 characters, required)"
-}
+```
+Uber/
+├── Backend/
+│   ├── controllers/
+│   │   ├── captain.controller.js
+│   │   └── user.controller.js
+│   ├── middlewares/
+│   │   └── auth.middleware.js
+│   ├── models/
+│   │   ├── captain.model.js
+│   │   ├── user.model.js
+│   │   └── blackListToken.model.js
+│   ├── routes/
+│   │   ├── captain.routes.js
+│   │   └── user.routes.js
+│   ├── services/
+│   │   ├── captain.service.js
+│   │   └── user.service.js
+│   ├── db/
+│   │   └── db.js
+│   ├── app.js
+│   └── ...
+└── README.md
 ```
 
-#### Response:
+---
 
-##### Success (201):
-- **Description**: User successfully registered.
-- **Response Body**:
-  ```json
-  {
-    "token": "string (JWT token)",
-    "user": {
-      "_id": "string",
-      "fullname": {
-        "firstname": "string",
-        "lastname": "string"
-      },
-      "email": "string"
-    }
-  }
-  ```
+## Features
 
-##### Error (400):
-- **Description**: Validation errors or missing required fields.
-- **Response Body**:
-  ```json
-  {
-    "errors": [
-      {
-        "msg": "string (error message)",
-        "param": "string (field name)",
-        "location": "string (body)"
-      }
-    ]
-  }
-  ```
+### 1. **Captain Management**
+- Captains can register with their details, including name, email, password, and vehicle information.
+- Captains can log in using their email and password.
+- Authenticated captains can retrieve their profile information.
+- Captains can log out, and their JWT token is blacklisted to prevent reuse.
+
+### 2. **User Management**
+- Users can register with their details, including name, email, and password.
+- Users can log in using their email and password.
+- Authenticated users can retrieve their profile information.
+- Users can log out, and their JWT token is blacklisted to prevent reuse.
 
 ---
 
-## User Login
+## API Endpoints
 
-### Endpoint: `/users/login`
+### Captain Routes
 
-#### Method: `POST`
+| Method | Endpoint         | Description                     |
+|--------|-------------------|---------------------------------|
+| POST   | `/captains/register` | Register a new captain         |
+| POST   | `/captains/login`    | Login as a captain             |
+| GET    | `/captains/profile`  | Get captain profile (auth)     |
+| GET    | `/captains/logout`   | Logout captain (auth)          |
 
-#### Description:
-This endpoint is used to authenticate a user and return a JWT token.
+### User Routes
 
-#### Request Body:
-```json
-{
-  "email": "string (valid email format, required)",
-  "password": "string (min: 6 characters, required)"
-}
-```
-
-#### Response:
-
-##### Success (200):
-- **Description**: User successfully logged in.
-- **Response Body**:
-  ```json
-  {
-    "token": "string (JWT token)",
-    "user": {
-      "_id": "string",
-      "fullname": {
-        "firstname": "string",
-        "lastname": "string"
-      },
-      "email": "string"
-    }
-  }
-  ```
-
-##### Error (400 or 401):
-- **Description**: Validation errors or invalid credentials.
-- **Response Body**:
-  ```json
-  {
-    "message": "string (error message)"
-  }
-  ```
+| Method | Endpoint      | Description                     |
+|--------|---------------|---------------------------------|
+| POST   | `/users/register` | Register a new user            |
+| POST   | `/users/login`    | Login as a user                |
+| GET    | `/users/profile`  | Get user profile (auth)        |
+| GET    | `/users/logout`   | Logout user (auth)             |
 
 ---
 
-## Get User Profile
+## Validation Rules
 
-### Endpoint: `/users/profile`
+### Captain Registration
+- `email`: Must be a valid email.
+- `fullname.firstname`: Minimum 3 characters.
+- `password`: Minimum 6 characters.
+- `vehicle.color`: Minimum 3 characters.
+- `vehicle.plate`: Minimum 3 characters.
+- `vehicle.capacity`: Must be an integer ≥ 1.
+- `vehicle.vehicleType`: Must be one of `car`, `motorcycle`, or `auto`.
 
-#### Method: `GET`
+### User Registration
+- `email`: Must be a valid email.
+- `fullname.firstname`: Minimum 3 characters.
+- `password`: Minimum 6 characters.
 
-#### Description:
-This endpoint retrieves the profile of the authenticated user.
-
-#### Headers:
-- **Authorization**: `Bearer <JWT token>` (required)
-
-#### Response:
-
-##### Success (200):
-- **Description**: User profile retrieved successfully.
-- **Response Body**:
-  ```json
-  {
-    "_id": "string",
-    "fullname": {
-      "firstname": "string",
-      "lastname": "string"
-    },
-    "email": "string"
-  }
-  ```
-
-##### Error (401):
-- **Description**: Unauthorized access.
-- **Response Body**:
-  ```json
-  {
-    "message": "Unauthorized"
-  }
-  ```
+### Login (Both Captains and Users)
+- `email`: Must be a valid email.
+- `password`: Minimum 6 characters.
 
 ---
 
-## User Logout
+## Technical Details
 
-### Endpoint: `/users/logout`
+### Models
 
-#### Method: `GET`
+#### Captain Model
+- **Fields**:
+  - `fullname`: Contains `firstname` and `lastname` with validation.
+  - `email`: Unique and validated email address.
+  - `password`: Hashed password stored securely.
+  - `vehicle`: Contains details like `color`, `plate`, `capacity`, and `vehicleType`.
+  - `status`: Enum with values `active` and `inactive`.
+  - `location`: Stores latitude and longitude.
 
-#### Description:
-This endpoint logs out the authenticated user by clearing the token and blacklisting it.
+- **Methods**:
+  - `generateAuthToken`: Generates a JWT token for authentication.
+  - `comparePassword`: Compares a plain-text password with the hashed password.
+  - `hashPassword`: Hashes a plain-text password.
 
-#### Headers:
-- **Authorization**: `Bearer <JWT token>` (required)
+#### User Model
+- **Fields**:
+  - `fullname`: Contains `firstname` and `lastname` with validation.
+  - `email`: Unique and validated email address.
+  - `password`: Hashed password stored securely.
 
-#### Response:
+- **Methods**:
+  - `generateAuthToken`: Generates a JWT token for authentication.
+  - `comparePassword`: Compares a plain-text password with the hashed password.
+  - `hashPassword`: Hashes a plain-text password.
 
-##### Success (200):
-- **Description**: User successfully logged out.
-- **Response Body**:
-  ```json
-  {
-    "message": "Logged Out Successfully"
-  }
-  ```
+#### Blacklist Token Model
+- Used to store JWT tokens that are blacklisted during logout.
 
-##### Error (401):
-- **Description**: Unauthorized access.
-- **Response Body**:
-  ```json
-  {
-    "message": "Unauthorized"
-  }
-  ```
+---
+
+### Services
+
+#### Captain Service
+- Handles the creation of captains with validation for required fields.
+- Ensures proper structuring of data before saving to the database.
+
+#### User Service
+- Handles the creation of users with validation for required fields.
+- Ensures proper structuring of data before saving to the database.
+
+---
+
+### Controllers
+
+#### Captain Controller
+- **registerCaptain**: Handles captain registration with validation and password hashing.
+- **loginCaptain**: Handles login with password comparison and token generation.
+- **getCaptainProfile**: Retrieves the authenticated captain's profile.
+- **logoutCaptain**: Logs out the captain by blacklisting the token.
+
+#### User Controller
+- **registerUser**: Handles user registration with validation and password hashing.
+- **loginUser**: Handles login with password comparison and token generation.
+- **getUserProfile**: Retrieves the authenticated user's profile.
+- **logoutUser**: Logs out the user by blacklisting the token.
+
+---
+
+## How to Run
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd Uber/Backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   - Create a `.env` file in the `Backend` directory.
+   - Add the following variables:
+     ```
+     JWT_SECRET=<your_jwt_secret>
+     DB_URI=<your_database_uri>
+     ```
+
+4. Start the server:
+   ```bash
+   npm start
+   ```
+
+5. Access the API at `http://localhost:<port>`.
+
+---
+
+## Contributing
+
+Feel free to submit issues or pull requests for improvements or bug fixes.
+
+---
+
+## License
+
+This project is licensed under the MIT License.
